@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Замовлення обідів</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #F5F4F0;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #fff;
+    border-bottom: 1px solid #E8E6E0;
+    padding: 14px 20px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header p  { font-size: 13px; color: #999; margin-top: 2px; }
+
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 16px 16px 140px;
+  }
+
+  .section-title {
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #999; margin: 20px 0 10px;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  input[type="text"], input[type="tel"] {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid #E0DDD7; border-radius: 12px;
+    font-size: 15px; background: #fff; color: #1a1a1a;
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus { border-color: #1D9E75; }
+  input::placeholder { color: #bbb; }
+
+  /* ACCORDION */
+  .accordion { margin-bottom: 12px; border-radius: 18px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+
+  .accordion-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px; cursor: pointer;
+    user-select: none; transition: opacity 0.15s;
+  }
+  .accordion-header:active { opacity: 0.85; }
+
+  .accordion-header.complex  { background: linear-gradient(135deg, #1D9E75, #15755a); color: #fff; }
+  .accordion-header.assort   { background: linear-gradient(135deg, #F4A623, #D4891A); color: #fff; }
+  .accordion-header.extra    { background: linear-gradient(135deg, #5B6EF5, #3A4ED4); color: #fff; }
+
+  .accordion-title { font-size: 17px; font-weight: 700; }
+  .accordion-sub   { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+  .accordion-badge {
+    background: rgba(255,255,255,0.25);
+    border-radius: 99px; padding: 4px 12px;
+    font-size: 13px; font-weight: 600;
+    white-space: nowrap; margin-left: 12px;
+    flex-shrink: 0;
+  }
+
+  .accordion-arrow {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-left: 10px; flex-shrink: 0;
+    transition: transform 0.3s;
+  }
+  .accordion-arrow svg { width: 14px; height: 14px; }
+  .accordion.open .accordion-arrow { transform: rotate(180deg); }
+
+  .accordion-body {
+    background: #fff;
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+    padding: 0 16px;
+  }
+  .accordion.open .accordion-body {
+    max-height: 4000px;
+    padding: 16px;
+  }
+
+  /* COMPLEX ITEMS */
+  .complex-price-info {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #E8F7F1; border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .complex-price-info .label { font-size: 13px; color: #1D9E75; font-weight: 500; }
+  .complex-price-info .price { font-size: 20px; font-weight: 700; color: #1D9E75; }
+  .savings-badge {
+    background: #1D9E75; color: #fff;
+    font-size: 12px; font-weight: 600;
+    padding: 3px 10px; border-radius: 99px;
+  }
+
+  .complex-item {
+    background: #F9F8F6; border-radius: 14px;
+    border: 1.5px solid #E8E6E0; padding: 12px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    animation: fadeInUp 0.3s ease backwards;
+  }
+  .complex-item.checked {
+    border-color: #1D9E75;
+    background: #F0FCF8;
+  }
+
+  .complex-checkbox {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid #D0CEC8; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .complex-item.checked .complex-checkbox { background: #1D9E75; border-color: #1D9E75; }
+  .complex-checkbox svg { display: none; }
+  .complex-item.checked .complex-checkbox svg { display: block; }
+
+  .complex-qty-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #F0FCF8; border: 1.5px solid #1D9E75;
+    border-radius: 14px; padding: 14px 16px;
+    margin-top: 6px;
+    animation: fadeInUp 0.3s ease;
+  }
+  .complex-qty-label { font-size: 15px; font-weight: 600; color: #1D9E75; }
+  .complex-qty-sub   { font-size: 12px; color: #999; margin-top: 2px; }
+
+  /* DISH CARDS */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    0%   { transform: scale(0.9); opacity: 0; }
+    60%  { transform: scale(1.03); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .dish-card {
+    background: #F9F8F6; border-radius: 14px;
+    border: 1.5px solid #E8E6E0; padding: 12px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    animation: fadeInUp 0.3s ease backwards;
+  }
+  .dish-card.active { border-color: #1D9E75; background: #F0FCF8; }
+
+  .dish-photo {
+    width: 66px; height: 66px; border-radius: 10px;
+    background: #EEECEA; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; overflow: hidden;
+  }
+  .dish-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+
+  .dish-info { flex: 1; min-width: 0; }
+  .dish-name  { font-size: 15px; font-weight: 500; }
+  .dish-meta  { font-size: 12px; color: #aaa; margin-top: 3px; }
+  .dish-price { font-size: 14px; font-weight: 600; color: #1D9E75; margin-top: 4px; }
+
+  .qty-control { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+  .qty-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1.5px solid #E0DDD7; background: #fff;
+    color: #1a1a1a; font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, transform 0.1s;
+    user-select: none;
+  }
+  .qty-btn:active { transform: scale(0.88); }
+  .qty-btn.plus { border-color: #1D9E75; color: #1D9E75; background: #E8F7F1; }
+  .qty-btn.plus:active { background: #C3E8DA; }
+
+  .qty-num {
+    font-size: 17px; font-weight: 600;
+    min-width: 22px; text-align: center; display: inline-block;
+  }
+  .qty-num.bump { animation: popIn 0.22s ease; }
+
+  .category-title {
+    font-size: 16px; font-weight: 700; color: #1a1a1a;
+    margin: 18px 0 10px;
+  }
+  .category-title:first-child { margin-top: 0; }
+
+  /* BOTTOM BAR */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid #E8E6E0;
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    z-index: 10;
+  }
+  .total-info { display: flex; flex-direction: column; }
+  .total-label { font-size: 12px; color: #999; }
+  .total-value { font-size: 22px; font-weight: 700; }
+
+  .order-btn {
+    flex: 1; max-width: 260px; padding: 14px;
+    background: #1D9E75; color: #fff; border: none;
+    border-radius: 14px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .order-btn:hover:not(:disabled) { background: #178a64; }
+  .order-btn:active:not(:disabled) { transform: scale(0.97); }
+  .order-btn:disabled { background: #D0D0CC; color: #aaa; cursor: default; }
+
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: -3px; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    display: none; position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a; color: #fff;
+    padding: 12px 22px; border-radius: 99px;
+    font-size: 14px; font-weight: 500;
+    z-index: 200; white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .toast.error { background: #e24b4a; }
+
+  #receiptModal {
+    display: none; position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 150;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .receipt-box {
+    background: #fff; border-radius: 20px; padding: 24px;
+    max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto;
+    animation: popIn 0.3s ease;
+  }
+  .receipt-item { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+
+  .loading-ph { text-align: center; color: #bbb; padding: 24px 0; font-size: 14px; }
+
+  @media (max-width: 420px) {
+    .field-row { grid-template-columns: 1fr; }
+    .dish-photo { width: 58px; height: 58px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div id="receiptModal">
+  <div class="receipt-box">
+    <div style="text-align:center; margin-bottom:16px;">
+      <div style="font-size:40px;">🎉</div>
+      <h2 style="font-size:18px; font-weight:700; margin:8px 0 4px;">Замовлення прийнято!</h2>
+      <p style="font-size:14px; color:#1D9E75; font-weight:600;">Дякуємо! Очікуйте доставки 🚗</p>
+    </div>
+    <div id="receiptItems" style="border-top:1px solid #eee; border-bottom:1px solid #eee; padding:12px 0; margin-bottom:12px;"></div>
+    <div style="display:flex; justify-content:space-between; font-weight:700; font-size:16px; margin-bottom:16px;">
+      <span>Разом:</span>
+      <span id="receiptTotal" style="color:#1D9E75;"></span>
+    </div>
+    <button onclick="closeReceipt()" style="width:100%; padding:14px; background:#1D9E75; color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:600; cursor:pointer;">Закрити</button>
+  </div>
+</div>
+
+<header>
+  <h1>🍽 Замовлення обідів</h1>
+  <p id="dateLabel"></p>
+</header>
+
+<div class="container">
+
+  <p class="section-title">Ваші дані</p>
+  <div class="field-group">
+    <div class="field-row">
+      <input type="text" id="clientName" placeholder="Ім'я" />
+      <input type="tel" id="clientPhone" placeholder="Телефон" />
+    </div>
+    <input type="text" id="clientAddress" placeholder="Адреса доставки (вул., будинок, кв.)" />
+  </div>
+
+  <!-- ACCORDION 1: COMPLEX -->
+  <div class="accordion" id="acc-complex">
+    <div class="accordion-header complex" onclick="toggleAccordion('complex')">
+      <div>
+        <div class="accordion-title">🥗 Комплексні обіди</div>
+        <div class="accordion-sub" id="complex-sub">Натисніть щоб вибрати</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="accordion-badge" id="complex-badge" style="display:none;"></span>
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="complexContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCORDION 2: ASSORT -->
+  <div class="accordion" id="acc-assort">
+    <div class="accordion-header assort" onclick="toggleAccordion('assort')">
+      <div>
+        <div class="accordion-title">🍲 Додатковий асортимент</div>
+        <div class="accordion-sub" id="assort-sub">Натисніть щоб вибрати</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="accordion-badge" id="assort-badge" style="display:none;"></span>
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="assortContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCORDION 3: EXTRA -->
+  <div class="accordion" id="acc-extra">
+    <div class="accordion-header extra" onclick="toggleAccordion('extra')">
+      <div>
+        <div class="accordion-title">➕ Додатково</div>
+        <div class="accordion-sub" id="extra-sub">Натисніть щоб вибрати</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="accordion-badge" id="extra-badge" style="display:none;"></span>
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="extraContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-bar">
+  <div class="total-info">
+    <span class="total-label">Сума замовлення</span>
+    <div class="total-value"><span id="totalSum">0</span> <span style="font-size:14px;font-weight:400;">грн</span></div>
+  </div>
+  <button class="order-btn" id="orderBtn" onclick="submitOrder()" disabled>Замовити</button>
+</div>
+
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCiyfn9oyiw-PwUecTzYYEUIPpcuJfo5HZfdDT2uwtSzW3uJUZJdvBCg11YSlX-5rkxQ/exec";
+
+  // ── State ──────────────────────────────────────────────
+  let complexItems = [], complexPrice = 0;
+  let complexChecked = {}, complexQty = 1;
+
+  let assortDishes = [], assortQty = {};
+  let extraItems = [],   extraQty  = {};
+
+  const CATEGORY_ORDER = ["Перші страви","Готові страви","М'ясні вироби","Гарніри","Салати","Додатково","Напої","Інше"];
+
+  // ── Init ───────────────────────────────────────────────
+  function tomorrow() {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    return d.toLocaleDateString("uk-UA", { weekday:"long", day:"numeric", month:"long" });
+  }
+  document.getElementById("dateLabel").textContent = "на " + tomorrow();
+
+  const saved = JSON.parse(localStorage.getItem("clientData") || "{}");
+  if (saved.name)    document.getElementById("clientName").value    = saved.name;
+  if (saved.phone)   document.getElementById("clientPhone").value   = saved.phone;
+  if (saved.address) document.getElementById("clientAddress").value = saved.address;
+
+  ["clientName","clientPhone","clientAddress"].forEach(id =>
+    document.getElementById(id).addEventListener("input", updateSummary)
+  );
+
+  loadComplex(); loadAssort(); loadExtra();
+
+  // ── Accordion ──────────────────────────────────────────
+  function toggleAccordion(id) {
+    document.getElementById("acc-" + id).classList.toggle("open");
+  }
+
+  // ── COMPLEX ────────────────────────────────────────────
+  async function loadComplex() {
+    try {
+      const res  = await fetch(SCRIPT_URL + "?action=complex");
+      const data = await res.json();
+      complexItems = data.items || [];
+      complexPrice = Number(data.complexPrice) || 0;
+      // За замовчуванням всі позиції вибрані
+      complexItems.forEach(d => complexChecked[d.name] = true);
+      renderComplex();
+    } catch(e) {
+      document.getElementById("complexContent").innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+    }
+  }
+
+  function renderComplex() {
+    const allPrice  = complexItems.reduce((s,d) => s + (Number(d.price)||0), 0);
+    const savings   = allPrice - complexPrice;
+    const allChecked = complexItems.length > 0 && complexItems.every(d => complexChecked[d.name]);
+
+    let html = "";
+
+    // Price info
+    html += `<div class="complex-price-info">
+      <div>
+        <div class="label">Ціна комплексу</div>
+        ${savings > 0 ? `<span class="savings-badge">Економія ${savings} грн</span>` : ""}
+      </div>
+      <div class="price">${complexPrice} грн</div>
+    </div>`;
+
+    // Items
+    html += complexItems.map((d, i) => {
+      const checked = complexChecked[d.name];
+      const isUrl = d.photo && (d.photo.startsWith("http") || d.photo.startsWith("/"));
+      const photoHtml = isUrl
+        ? `<div class="dish-photo"><img src="${d.photo}" alt="${d.name}"/></div>`
+        : `<div class="dish-photo">${d.photo || "🍽"}</div>`;
+      return `
+        <div class="complex-item ${checked?"checked":""}" onclick="toggleComplex('${d.name.replace(/'/g,"\\'")}',${i})">
+          ${photoHtml}
+          <div class="dish-info">
+            <div class="dish-name">${d.name}</div>
+            <div class="dish-meta">${d.kcal ? d.kcal+" ккал" : ""}</div>
+            <div class="dish-price">${d.price} грн окремо</div>
+          </div>
+          <div class="complex-checkbox">
+            <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+              <path d="M1 5L4.5 8.5L11 1" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>`;
+    }).join("");
+
+    // Qty row if all checked
+    if (allChecked) {
+      html += `<div class="complex-qty-row">
+        <div>
+          <div class="complex-qty-label">Кількість комплексів</div>
+          <div class="complex-qty-sub">Всі позиції обрано ✓</div>
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="event.stopPropagation(); changeComplexQty(-1)">−</button>
+          <span class="qty-num" id="complexQtyNum">${complexQty}</span>
+          <button class="qty-btn plus" onclick="event.stopPropagation(); changeComplexQty(1)">+</button>
+        </div>
+      </div>`;
+    }
+
+    document.getElementById("complexContent").innerHTML = html;
+    updateComplexBadge();
+    updateSummary();
+  }
+
+  function toggleComplex(name, i) {
+    complexChecked[name] = !complexChecked[name];
+    if (!complexChecked[name]) complexQty = 1;
+    renderComplex();
+  }
+
+  function changeComplexQty(delta) {
+    complexQty = Math.max(1, complexQty + delta);
+    document.getElementById("complexQtyNum").textContent = complexQty;
+    updateComplexBadge();
+    updateSummary();
+  }
+
+  function updateComplexBadge() {
+    const allChecked = complexItems.length > 0 && complexItems.every(d => complexChecked[d.name]);
+    const total = getComplexTotal();
+    const badge = document.getElementById("complex-badge");
+    const sub   = document.getElementById("complex-sub");
+    if (total > 0) {
+      badge.style.display = "inline-block";
+      badge.textContent = total + " грн";
+      sub.textContent = allChecked ? `${complexQty} комплекс` : "Часткове замовлення";
+    } else {
+      badge.style.display = "none";
+      sub.textContent = "Натисніть щоб вибрати";
+    }
+  }
+
+  function getComplexTotal() {
+    const allChecked = complexItems.length > 0 && complexItems.every(d => complexChecked[d.name]);
+    if (allChecked) return complexPrice * complexQty;
+    return complexItems.filter(d => complexChecked[d.name]).reduce((s,d) => s + (Number(d.price)||0), 0);
+  }
+
+  // ── ASSORT ─────────────────────────────────────────────
+  async function loadAssort() {
+    try {
+      const res  = await fetch(SCRIPT_URL + "?action=assort");
+      const data = await res.json();
+      assortDishes = (data.dishes || []).map((d,i) => ({...d, id:"a"+i}));
+      assortDishes.forEach(d => assortQty[d.id] = 0);
+      renderAssort();
+    } catch(e) {
+      document.getElementById("assortContent").innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+    }
+  }
+
+  function renderAssort() {
+    const grouped = {};
+    assortDishes.forEach(d => {
+      const cat = d.category || "Інше";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(d);
+    });
+    const cats = Object.keys(grouped).sort((a,b) => {
+      const ia = CATEGORY_ORDER.indexOf(a), ib = CATEGORY_ORDER.indexOf(b);
+      return (ia===-1?999:ia)-(ib===-1?999:ib);
+    });
+
+    document.getElementById("assortContent").innerHTML = cats.map(cat => `
+      <div>
+        <h3 class="category-title">${cat}</h3>
+        ${grouped[cat].map(d => dishCardHtml(d, "assort")).join("")}
+      </div>`).join("") || '<p class="loading-ph">Немає активних позицій</p>';
+  }
+
+  // ── EXTRA ──────────────────────────────────────────────
+  async function loadExtra() {
+    try {
+      const res  = await fetch(SCRIPT_URL + "?action=extra");
+      const data = await res.json();
+      extraItems = (data.items || []).map((d,i) => ({...d, id:"e"+i}));
+      extraItems.forEach(d => extraQty[d.id] = 0);
+      renderExtra();
+    } catch(e) {
+      document.getElementById("extraContent").innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+    }
+  }
+
+  function renderExtra() {
+    document.getElementById("extraContent").innerHTML =
+      extraItems.map(d => dishCardHtml(d, "extra")).join("") ||
+      '<p class="loading-ph">Немає активних позицій</p>';
+  }
+
+  // ── Shared dish card ───────────────────────────────────
+  function dishCardHtml(d, tab) {
+    const isUrl = d.photo && (d.photo.startsWith("http") || d.photo.startsWith("/"));
+    const photoHtml = isUrl
+      ? `<div class="dish-photo"><img src="${d.photo}" alt="${d.name}"/></div>`
+      : `<div class="dish-photo">${d.photo || "🍽"}</div>`;
+    const q = tab === "assort" ? (assortQty[d.id]||0) : (extraQty[d.id]||0);
+    return `
+      <div class="dish-card ${q>0?"active":""}" id="card-${d.id}">
+        ${photoHtml}
+        <div class="dish-info">
+          <div class="dish-name">${d.name}</div>
+          <div class="dish-meta">${d.kcal ? d.kcal+" ккал" : ""}</div>
+          <div class="dish-price">${d.price} грн</div>
+        </div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeDish('${d.id}','${tab}',-1)">−</button>
+          <span class="qty-num" id="qty-${d.id}">${q}</span>
+          <button class="qty-btn plus" onclick="changeDish('${d.id}','${tab}',1)">+</button>
+        </div>
+      </div>`;
+  }
+
+  function changeDish(id, tab, delta) {
+    const qtyMap = tab === "assort" ? assortQty : extraQty;
+    qtyMap[id] = Math.max(0, (qtyMap[id]||0) + delta);
+    document.getElementById("card-"+id).classList.toggle("active", qtyMap[id] > 0);
+    const el = document.getElementById("qty-"+id);
+    el.textContent = qtyMap[id];
+    el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+    updateAssortBadge();
+    updateExtraBadge();
+    updateSummary();
+  }
+
+  function updateAssortBadge() {
+    const total = assortDishes.reduce((s,d) => s + (assortQty[d.id]||0)*(Number(d.price)||0), 0);
+    const count = assortDishes.reduce((s,d) => s + (assortQty[d.id]||0), 0);
+    const badge = document.getElementById("assort-badge");
+    const sub   = document.getElementById("assort-sub");
+    if (total > 0) {
+      badge.style.display = "inline-block";
+      badge.textContent = total + " грн";
+      sub.textContent = count + " позиц.";
+    } else {
+      badge.style.display = "none";
+      sub.textContent = "Натисніть щоб вибрати";
+    }
+  }
+
+  function updateExtraBadge() {
+    const total = extraItems.reduce((s,d) => s + (extraQty[d.id]||0)*(Number(d.price)||0), 0);
+    const count = extraItems.reduce((s,d) => s + (extraQty[d.id]||0), 0);
+    const badge = document.getElementById("extra-badge");
+    const sub   = document.getElementById("extra-sub");
+    if (total > 0) {
+      badge.style.display = "inline-block";
+      badge.textContent = total + " грн";
+      sub.textContent = count + " позиц.";
+    } else {
+      badge.style.display = "none";
+      sub.textContent = "Натисніть щоб вибрати";
+    }
+  }
+
+  // ── Summary ────────────────────────────────────────────
+  function updateSummary() {
+    const total = getComplexTotal()
+      + assortDishes.reduce((s,d) => s + (assortQty[d.id]||0)*(Number(d.price)||0), 0)
+      + extraItems.reduce((s,d)   => s + (extraQty[d.id]||0)*(Number(d.price)||0),  0);
+
+    document.getElementById("totalSum").textContent = total;
+
+    const name    = document.getElementById("clientName").value.trim();
+    const phone   = document.getElementById("clientPhone").value.trim();
+    const address = document.getElementById("clientAddress").value.trim();
+    document.getElementById("orderBtn").disabled = total === 0 || !name || !phone || !address;
+  }
+
+  // ── Submit ─────────────────────────────────────────────
+  async function submitOrder() {
+    const name    = document.getElementById("clientName").value.trim();
+    const phone   = document.getElementById("clientPhone").value.trim();
+    const address = document.getElementById("clientAddress").value.trim();
+
+    const btn = document.getElementById("orderBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Відправляємо...';
+
+    const allChecked = complexItems.length > 0 && complexItems.every(d => complexChecked[d.name]);
+    const dishes = [];
+
+    if (allChecked && complexQty > 0) {
+      dishes.push({ name: "Комплексний обід", qty: complexQty });
+    } else {
+      complexItems.filter(d => complexChecked[d.name]).forEach(d => dishes.push({ name: d.name, qty: 1 }));
+    }
+    assortDishes.filter(d => assortQty[d.id] > 0).forEach(d => dishes.push({ name: d.name, qty: assortQty[d.id] }));
+    extraItems.filter(d => extraQty[d.id] > 0).forEach(d => dishes.push({ name: d.name, qty: extraQty[d.id] }));
+
+    const payload = { name, phone, address, dishes };
+
+    // Receipt
+    const receiptItems = [];
+    if (allChecked && complexQty > 0) {
+      receiptItems.push({ label: `Комплексний обід × ${complexQty}`, sum: complexPrice * complexQty });
+    } else {
+      complexItems.filter(d => complexChecked[d.name]).forEach(d =>
+        receiptItems.push({ label: d.name + " × 1", sum: Number(d.price)||0 }));
+    }
+    assortDishes.filter(d => assortQty[d.id] > 0).forEach(d =>
+      receiptItems.push({ label: `${d.name} × ${assortQty[d.id]}`, sum: assortQty[d.id]*(Number(d.price)||0) }));
+    extraItems.filter(d => extraQty[d.id] > 0).forEach(d =>
+      receiptItems.push({ label: `${d.name} × ${extraQty[d.id]}`, sum: extraQty[d.id]*(Number(d.price)||0) }));
+    const totalSum = receiptItems.reduce((s,i) => s+i.sum, 0);
+
+    localStorage.setItem("clientData", JSON.stringify({ name, phone, address }));
+
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(payload));
+    fetch(SCRIPT_URL, { method:"POST", mode:"no-cors", body: formData });
+
+    setTimeout(() => {
+      document.getElementById("receiptItems").innerHTML = receiptItems.map(i =>
+        `<div class="receipt-item"><span>${i.label}</span><span style="font-weight:500;">${i.sum} грн</span></div>`
+      ).join("");
+      document.getElementById("receiptTotal").textContent = totalSum + " грн";
+      document.getElementById("receiptModal").style.display = "flex";
+
+      complexItems.forEach(d => complexChecked[d.name] = true);
+      complexQty = 1;
+      assortDishes.forEach(d => assortQty[d.id] = 0);
+      extraItems.forEach(d => extraQty[d.id] = 0);
+
+      renderComplex(); renderAssort(); renderExtra();
+      updateAssortBadge(); updateExtraBadge();
+      btn.innerHTML = "Замовити";
+      updateSummary();
+    }, 1500);
+  }
+
+  function closeReceipt() {
+    document.getElementById("receiptModal").style.display = "none";
+  }
+
+  function showToast(msg, isError) {
+    const t = document.getElementById("toast");
+    t.className = "toast" + (isError?" error":"");
+    t.innerHTML = msg; t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 3500);
+  }
+</script>
+</body>
+</html>
