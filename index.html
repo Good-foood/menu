@@ -985,31 +985,33 @@ async function submitOrder() {
 
   localStorage.setItem("clientData", JSON.stringify({ name, phone, address }));
 
-  const formData = new FormData();
-  formData.append("data", JSON.stringify(payload));
-  fetch(SCRIPT_URL, { method:"POST", mode:"no-cors", body: formData });
-
-  setTimeout(() => {
-    document.getElementById("receiptItems").innerHTML = receiptItems.map(i =>
-      i.small
-        ? `<div style="font-size:12px;color:#999;padding:2px 0 6px;">${i.label}</div>`
-        : `<div class="receipt-item"><span>${i.label}</span><span style="font-weight:500;">${i.sum} грн</span></div>`
-    ).join("");
-    document.getElementById("receiptTotal").textContent = totalSum + " грн";
-    document.getElementById("receiptModal").style.display = "flex";
-
-    complexQty = 0;
-    sel = { first: null, druheType: null, gotove: null, garnir: null, myaso: null, salat: null, napiy: null };
-    document.getElementById("acc-complex").classList.remove("open");
-    assortDishes.forEach(d => assortQty[d.id] = 0);
-    extraItems.forEach(d => extraQty[d.id] = 0);
-
-    renderComplex(); renderAssort(); renderExtra();
-    updateAssortBadge(); updateExtraBadge();
-    btn.innerHTML = "Замовити";
-    updateSummary();
-  }, 1500);
+  try {
+  await fetch(SCRIPT_URL + "?action=order&data=" + encodeURIComponent(JSON.stringify(payload)), { method: "GET", mode: "no-cors" });
+} catch (err) {
+  showToast("Помилка з'єднання. Спробуйте ще раз", true);
+  btn.disabled = false;
+  btn.innerHTML = "Замовити";
+  return;
 }
+
+document.getElementById("receiptItems").innerHTML = receiptItems.map(i =>
+  i.small
+    ? `<div style="font-size:12px;color:#999;padding:2px 0 6px;">${i.label}</div>`
+    : `<div class="receipt-item"><span>${i.label}</span><span style="font-weight:500;">${i.sum} грн</span></div>`
+).join("");
+document.getElementById("receiptTotal").textContent = totalSum + " грн";
+document.getElementById("receiptModal").style.display = "flex";
+
+complexQty = 0;
+sel = { first: null, druheType: null, gotove: null, garnir: null, myaso: null, salat: null, napiy: null };
+document.getElementById("acc-complex").classList.remove("open");
+assortDishes.forEach(d => assortQty[d.id] = 0);
+extraItems.forEach(d => extraQty[d.id] = 0);
+
+renderComplex(); renderAssort(); renderExtra();
+updateAssortBadge(); updateExtraBadge();
+btn.innerHTML = "Замовити";
+updateSummary();
 
 function closeReceipt() {
   document.getElementById("receiptModal").style.display = "none";
